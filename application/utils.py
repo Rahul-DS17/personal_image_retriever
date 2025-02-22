@@ -4,6 +4,14 @@ import torch
 from PIL import Image
 import numpy
 from transformers import AutoProcessor, AutoModel
+
+# Auto-clone repositories if they don't exist
+if not os.path.exists("qai_hub_models/models/openai_clip"):
+    os.system("git clone --quiet https://github.com/openai/CLIP.git qai_hub_models/models/openai_clip")
+
+if not os.path.exists("qai_hub_models/models/mediapipe_face"):
+    os.system("git clone --quiet https://github.com/google/mediapipe.git qai_hub_models/models/mediapipe_face")
+
 from qai_hub_models.models.openai_clip.model import Clip
 from qai_hub_models.models.mediapipe_face.model import MediaPipeFace
 from qai_hub_models.models.mediapipe_face.app import MediaPipeFaceApp

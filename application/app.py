@@ -37,18 +37,93 @@ reference_embeddings = load_from_pickle(os.path.join(assets_dir, 'ref_emb.pkl'))
 face_faiss_index = faiss.read_index(os.path.join(assets_dir, 'face_faiss_index.index'))
 face_indices = load_from_pickle(os.path.join(assets_dir, 'face_ind.pkl'))
 
-# Text input for query
 
-# with col_2:
-#     query = st.text_input("Enter your query:")
+# Custom CSS for styling
+st.markdown(
+    """
+    <h1 style='text-align: center; font-size: 60px; font-weight: bold; color: #FF5733;'>
+        SnapQuery
+    </h1>
+
+    """,
+    unsafe_allow_html=True
+)
+
+
+
 query = st.text_input("Enter your query:") 
 
-# Sidebar settings for adjustable thresholds
+# Sidebar
 with st.sidebar:
+    
+    st.markdown(
+            """
+            <div class="social-links">
+                <a href="https://affine.ai" target="_blank">
+                    <img src="https://affine.ai/wp-content/uploads/2024/06/logo.png" width="200">
+                </a>
+            </div>
+            """,
+        unsafe_allow_html=True,
+        )
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+
+    # Section Header
     st.header("Parameters")
-    clip_threshold = st.number_input("Image-Text Similarity Threshold", min_value=0.0, max_value=1.0, value=0.2, step=0.01)
-    fr_threshold = st.number_input("Face Recognition Similarity Threshold", min_value=0.0, max_value=1.0, value=0.8, step=0.01)
-    rrf_k = st.number_input("RRF k Value", min_value=1, max_value=100, value=60, step=10)
+
+    # Convert number inputs to sliders
+    clip_threshold = st.slider(
+        "Image-Text Similarity Threshold", 
+        min_value=0.0, 
+        max_value=1.0, 
+        value=0.2, 
+        step=0.01
+    )
+
+    fr_threshold = st.slider(
+        "Face Recognition Similarity Threshold", 
+        min_value=0.0, 
+        max_value=1.0, 
+        value=0.8, 
+        step=0.01
+    )
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+
+    # Adding social links
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(
+            """
+            <div class="linkedin-link">
+                <a href="https://www.linkedin.com/company/affine" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/81/LinkedIn_icon.svg" width="50">
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            """
+            <div class="instagram-links">
+                <a href="https://instagram.com/affine_ai?utm_medium=copy_link" target="_blank">
+                    <img src="https://affine.ai/wp-content/uploads//2024/07/729cd9027404cf30670b882ea5e9fc5f.svg" width="50">
+                </a>
+            </div>
+            """,
+        unsafe_allow_html=True,
+        )
+    with col3:
+        st.markdown(
+            """
+            <div class="twitter-links">
+                <a href="https://twitter.com/Affine_ai" target="_blank">
+                    <img src="https://affine.ai/wp-content/uploads//2024/07/765fcf6aaf81232068c684d9087ab153.svg" width="50">
+                </a>
+            </div>
+            """,
+        unsafe_allow_html=True,
+        )
 
 # If user enters a query, proceed with retrieval
 if query:
@@ -56,8 +131,6 @@ if query:
 
     # Compute the text embedding for the query using the loaded model and processor
     text_embedding = get_text_embedding(query, processor, model, device, model_choice)
-    if model_choice == "JINA":
-        text_embedding = text_embedding[:256]  # Ensure compatibility with JINA model
     
     # Perform image-text similarity search using FAISS index
     scores, indices = image_faiss_index.search(text_embedding.numpy().astype('float32'), len(image_paths))
@@ -114,7 +187,7 @@ if query:
         fr_paths = set(clip_paths)
 
     # Compute RRF scores to combine image-text and face recognition rankings
-    rrf_scores = {path: compute_rrf(clip_rank.get(path, {"rank": 1000})["rank"], fr_rank.get(path, {"rank": 1000})["rank"], rrf_k) for path in fr_paths.union(clip_paths)}
+    rrf_scores = {path: compute_rrf(clip_rank.get(path, {"rank": 1000})["rank"], fr_rank.get(path, {"rank": 1000})["rank"], 60) for path in fr_paths.union(clip_paths)}
     
     # Sort results based on RRF scores
     top_results = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
@@ -134,7 +207,7 @@ if query:
     for image_path, _ in top_results[:10]:
         img = Image.open(image_path)
         with cols[col_idx]:
-            st.image(img, use_column_width=True)
+            st.image(img, use_container_width=True)
         col_idx = (col_idx + 1) % cols_per_row
     
     # Display execution time in sidebar

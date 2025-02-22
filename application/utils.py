@@ -4,13 +4,29 @@ import torch
 from PIL import Image
 import numpy
 from transformers import AutoProcessor, AutoModel
+import subprocess
 
-# Auto-clone repositories if they don't exist
-if not os.path.exists("qai_hub_models/models/openai_clip"):
-    os.system("git clone --quiet https://github.com/openai/CLIP.git qai_hub_models/models/openai_clip")
+# Define the paths
+clip_repo_path = "qai_hub_models/models/openai_clip"
+mediapipe_repo_path = "qai_hub_models/models/mediapipe_face"
 
-if not os.path.exists("qai_hub_models/models/mediapipe_face"):
-    os.system("git clone --quiet https://github.com/google/mediapipe.git qai_hub_models/models/mediapipe_face")
+# Function to clone repositories if they don’t exist
+def clone_repo(repo_url, target_path):
+    if not os.path.exists(target_path):
+        print(f"Cloning {repo_url} into {target_path}...")
+        
+        # Automatically respond "yes" to any prompts
+        process = subprocess.run(
+            f"Y | git clone --quiet {repo_url} {target_path}",
+            shell=True,
+            check=True
+        )
+    else:
+        print(f"Repository already exists: {target_path}")
+
+# Clone necessary repositories
+clone_repo("https://github.com/openai/CLIP.git", clip_repo_path)
+clone_repo("https://github.com/google/mediapipe.git", mediapipe_repo_path)
 
 from qai_hub_models.models.openai_clip.model import Clip
 from qai_hub_models.models.mediapipe_face.model import MediaPipeFace
